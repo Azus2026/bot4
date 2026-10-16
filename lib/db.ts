@@ -196,6 +196,56 @@ export class DataRepository {
     }
   }
 
+  static async getAllCachedSearches(): Promise<SearchCacheEntry[]> {
+    try {
+      const db = await getDb();
+      const entries = await db.getAll("searchCache");
+      const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+      const now = Date.now();
+      const valid = entries.filter((e) => now - e.timestamp <= SEVEN_DAYS_MS);
+      return valid.sort((a, b) => b.timestamp - a.timestamp);
+    } catch {
+      return [];
+    }
+  }
+
+  static async deleteCachedSearch(cacheKey: string): Promise<void> {
+    try {
+      const db = await getDb();
+      await db.delete("searchCache", cacheKey);
+    } catch (e) {
+      console.warn("No se pudo eliminar la búsqueda en caché:", e);
+    }
+  }
+
+  static async clearAllCachedSearches(): Promise<void> {
+    try {
+      const db = await getDb();
+      await db.clear("searchCache");
+    } catch (e) {
+      console.warn("No se pudo limpiar la caché de búsqueda:", e);
+    }
+  }
+
+  // === ESTADO ACTIVO DE BÚSQUEDA (Para no perder resultados al cambiar de pestaña o recargar) ===
+  static async saveActiveSearchState(state: any): Promise<void> {
+    try {
+      const db = await getDb();
+      await db.put("settings", state, "last_active_search");
+    } catch (e) {
+      console.warn("No se pudo guardar el estado de búsqueda activa:", e);
+    }
+  }
+
+  static async getActiveSearchState(): Promise<any | null> {
+    try {
+      const db = await getDb();
+      return (await db.get("settings", "last_active_search")) || null;
+    } catch {
+      return null;
+    }
+  }
+
   // === SETTINGS & QUOTA ===
   static async getSettings(): Promise<AppSettings> {
     try {

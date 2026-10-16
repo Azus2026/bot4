@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { AppSettings, BusinessLead, LeadStatus } from "@/types/lead";
+import { AppSettings, BusinessLead, LeadStatus, SearchCacheEntry } from "@/types/lead";
 import { DataRepository, DEFAULT_SETTINGS } from "@/lib/db";
 import { AnalysisQueue } from "@/lib/queue";
 import { Navbar, NavTab } from "@/components/layout/Navbar";
@@ -14,6 +14,7 @@ import { NicheRadarView } from "@/components/radar/NicheRadarView";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { SettingsView } from "@/components/settings/SettingsView";
 import { ProposalsView } from "@/components/proposals/ProposalsView";
+import { SearchHistoryModal } from "@/components/search/SearchHistoryModal";
 import { checkStatusTransition } from "@/lib/proposal/workflow";
 import {
   Loader2,
@@ -35,6 +36,8 @@ export default function Home() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
   const [activeModalLead, setActiveModalLead] = useState<BusinessLead | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [historyCount, setHistoryCount] = useState<number>(0);
 
   // Estados de Búsqueda y Paginación
   const [isSearching, setIsSearching] = useState(false);
@@ -69,10 +72,31 @@ export default function Home() {
     viewMode: "table",
   });
 
-  // Cargar Ajustes y Leads de IndexedDB al inicio
+  const refreshHistoryCount = async () => {
+    try {
+      const entries = await DataRepository.getAllCachedSearches();
+      setHistoryCount(entries.length);
+    } catch {
+      setHistoryCount(0);
+    }
+  };
+
+  // Cargar Ajustes, Leads y Búsqueda Activa de IndexedDB al inicio
   useEffect(() => {
     DataRepository.getSettings().then((s) => setSettings(s));
     DataRepository.getAllLeads().then((l) => setSavedLeads(l));
+
+    // Restaurar automáticamente la última búsqueda activa guardada
+    DataRepository.getActiveSearchState().then((active) => {
+      if (active && active.results && active.results.length > 0) {
+        setSearchResults(active.results);
+        if (active.filters) setFilters(active.filters);
+        setIsFromCache(active.isFromCache ?? true);
+        setNextPageToken(active.nextPageToken ?? null);
+      }
+    });
+
+    refreshHistoryCount();
 
     // Suscripción a la cola de concurrencia
     const unsubscribe = AnalysisQueue.getInstance().subscribe((active, pending) => {
@@ -104,6 +128,12 @@ export default function Home() {
         setNextPageToken(cached.nextPageToken || null);
         setIsFromCache(true);
         setIsSearching(false);
+        await DataRepository.saveActiveSearchState({
+          filters,
+          results: cached.results,
+          isFromCache: true,
+          nextPageToken: cached.nextPageToken || null,
+        });
         return;
       }
 
@@ -133,15 +163,27 @@ export default function Home() {
       setSettings((prev) => ({ ...prev, placesApiCallCountThisMonth: newCount }));
 
       // Guardar en Caché IndexedDB
-      await DataRepository.setCachedSearch({
+      const cacheEntry: SearchCacheEntry = {
         cacheKey,
         query: `${filters.niche} en ${filters.zone}`,
         region: filters.region,
         country: filters.countryCode,
+        countryName: filters.countryName,
+        zone: filters.zone,
+        niche: filters.niche,
+        filterSpanish: filters.filterSpanish,
         results: places,
         nextPageToken: data.nextPageToken,
         timestamp: Date.now(),
+      };
+      await DataRepository.setCachedSearch(cacheEntry);
+      await DataRepository.saveActiveSearchState({
+        filters,
+        results: places,
+        isFromCache: false,
+        nextPageToken: data.nextPageToken || null,
       });
+      refreshHistoryCount();
 
       setSearchResults(places);
       setNextPageToken(data.nextPageToken || null);
@@ -150,6 +192,31 @@ export default function Home() {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  // Restaurar búsqueda desde el Historial en Caché
+  const handleRestoreSearch = async (entry: SearchCacheEntry) => {
+    const restoredFilters: SearchFilters = {
+      ...filters,
+      region: (entry.region as any) || filters.region,
+      countryCode: entry.country || filters.countryCode,
+      countryName: entry.countryName || filters.countryName,
+      zone: entry.zone || entry.query.split(" en ")[1] || filters.zone,
+      niche: entry.niche || entry.query.split(" en ")[0] || filters.niche,
+      filterSpanish: entry.filterSpanish ?? filters.filterSpanish,
+    };
+    setFilters(restoredFilters);
+    setSearchResults(entry.results || []);
+    setIsFromCache(true);
+    setNextPageToken(entry.nextPageToken || null);
+    setSearchError(null);
+    setSelectedLeadIds([]);
+    await DataRepository.saveActiveSearchState({
+      filters: restoredFilters,
+      results: entry.results || [],
+      isFromCache: true,
+      nextPageToken: entry.nextPageToken || null,
+    });
   };
 
   // Cargar Más Resultados (Paginación con retardo de 2 segundos de Google)
@@ -434,13 +501,23 @@ export default function Home() {
             {/* Consola de Filtros */}
             <SearchConsole
               filters={filters}
-              onFiltersChange={(newF) => setFilters(newF)}
+              onFiltersChange={(newF) => {
+                setFilters(newF);
+                DataRepository.saveActiveSearchState({
+                  filters: newF,
+                  results: searchResults,
+                  isFromCache,
+                  nextPageToken,
+                });
+              }}
               onSearch={handleSearch}
               isLoading={isSearching}
               onSaveBatch={handleSaveBatch}
               onAnalyzeBatch={handleAnalyzeBatch}
               selectedCount={selectedLeadIds.length}
               totalResults={displayedLeads.length}
+              onOpenHistory={() => setIsHistoryModalOpen(true)}
+              historyCount={historyCount}
             />
 
             {/* Aviso de Caché */}
@@ -669,6 +746,16 @@ export default function Home() {
           geminiApiKey={settings.geminiApiKey}
         />
       )}
+
+      {/* MODAL HISTORIAL DE BÚSQUEDAS EN DISCO LOCAL ($0.00) */}
+      <SearchHistoryModal
+        isOpen={isHistoryModalOpen}
+        onClose={() => {
+          setIsHistoryModalOpen(false);
+          refreshHistoryCount();
+        }}
+        onSelectSearch={handleRestoreSearch}
+      />
     </div>
   );
 }

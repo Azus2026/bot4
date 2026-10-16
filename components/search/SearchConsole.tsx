@@ -15,6 +15,7 @@ import {
   Sparkles,
   Loader2,
   AlertTriangle,
+  History,
 } from "lucide-react";
 
 import {
@@ -47,6 +48,8 @@ interface SearchConsoleProps {
   onAnalyzeBatch: () => void;
   selectedCount: number;
   totalResults: number;
+  onOpenHistory?: () => void;
+  historyCount?: number;
 }
 
 const REGION_COUNTRIES = {
@@ -85,6 +88,8 @@ export function SearchConsole({
   onAnalyzeBatch,
   selectedCount,
   totalResults,
+  onOpenHistory,
+  historyCount,
 }: SearchConsoleProps) {
   const [activeSectorId, setActiveSectorId] = useState<string | null>(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -122,51 +127,71 @@ export function SearchConsole({
     <div className="space-y-4 rounded-xl border border-radar-border bg-radar-panel p-4 sm:p-5 shadow-xl">
       {/* Selector Geográfico y Formulario de Búsqueda */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Fila 1: Región y País */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center rounded-lg border border-radar-borderLight bg-radar-bg p-1 text-xs font-mono">
-            {(["LATAM", "US", "EU"] as const).map((reg) => (
-              <button
-                key={reg}
-                type="button"
-                onClick={() => handleRegionChange(reg)}
-                className={`px-3 py-1.5 rounded-md font-bold transition-all ${
-                  filters.region === reg
-                    ? "bg-radar-accent text-black shadow-sm"
-                    : "text-radar-textMuted hover:text-radar-textLight"
-                }`}
-              >
-                {reg === "US" ? "EE.UU." : reg === "EU" ? "Europa" : "LATAM"}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-radar-textMuted">País:</span>
-            <select
-              value={filters.countryCode}
-              onChange={handleCountryChange}
-              className="rounded-lg border border-radar-borderLight bg-radar-bg px-3 py-1.5 text-xs text-radar-textLight focus:border-radar-accent focus:outline-none"
-            >
-              {REGION_COUNTRIES[filters.region].map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.name} ({c.code})
-                </option>
+        {/* Fila 1: Región, País y Botón Historial Caché */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center rounded-lg border border-radar-borderLight bg-radar-bg p-1 text-xs font-mono">
+              {(["LATAM", "US", "EU"] as const).map((reg) => (
+                <button
+                  key={reg}
+                  type="button"
+                  onClick={() => handleRegionChange(reg)}
+                  className={`px-3 py-1.5 rounded-md font-bold transition-all ${
+                    filters.region === reg
+                      ? "bg-radar-accent text-black shadow-sm"
+                      : "text-radar-textMuted hover:text-radar-textLight"
+                  }`}
+                >
+                  {reg === "US" ? "EE.UU." : reg === "EU" ? "Europa" : "LATAM"}
+                </button>
               ))}
-            </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-radar-textMuted">País:</span>
+              <select
+                value={filters.countryCode}
+                onChange={handleCountryChange}
+                className="rounded-lg border border-radar-borderLight bg-radar-bg px-3 py-1.5 text-xs text-radar-textLight focus:border-radar-accent focus:outline-none"
+              >
+                {REGION_COUNTRIES[filters.region].map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name} ({c.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Toggle Filtro de Audiencia Hispana */}
+            {(filters.region === "US" || (filters.region === "EU" && filters.countryCode !== "ES")) && (
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-radar-accent/40 bg-radar-accent/10 px-3 py-1 text-xs text-radar-accent">
+                <input
+                  type="checkbox"
+                  checked={filters.filterSpanish}
+                  onChange={(e) => onFiltersChange({ ...filters, filterSpanish: e.target.checked })}
+                  className="h-3.5 w-3.5 rounded border-radar-accent text-radar-accent focus:ring-0"
+                />
+                <span className="font-semibold">Destacar & Priorizar Hispanos</span>
+              </label>
+            )}
           </div>
 
-          {/* Toggle Filtro de Audiencia Hispana */}
-          {(filters.region === "US" || (filters.region === "EU" && filters.countryCode !== "ES")) && (
-            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-radar-accent/40 bg-radar-accent/10 px-3 py-1 text-xs text-radar-accent">
-              <input
-                type="checkbox"
-                checked={filters.filterSpanish}
-                onChange={(e) => onFiltersChange({ ...filters, filterSpanish: e.target.checked })}
-                className="h-3.5 w-3.5 rounded border-radar-accent text-radar-accent focus:ring-0"
-              />
-              <span className="font-semibold">Destacar & Priorizar Hispanos</span>
-            </label>
+          {/* Botón de Historial de Búsquedas en Caché ($0.00) */}
+          {onOpenHistory && (
+            <button
+              type="button"
+              onClick={onOpenHistory}
+              className="flex items-center gap-2 rounded-lg border border-radar-blue/40 bg-radar-blue/10 px-3 py-1.5 text-xs font-mono font-bold text-radar-blue hover:bg-radar-blue/20 hover:border-radar-blue transition-all shadow-sm"
+              title="Ver todas las búsquedas guardadas en disco local (Costo: $0.00)"
+            >
+              <History className="h-3.5 w-3.5" />
+              <span>Historial en Disco ($0.00)</span>
+              {historyCount !== undefined && historyCount > 0 && (
+                <span className="rounded-full bg-radar-blue/25 px-1.5 py-0.2 text-[10px] text-radar-blue font-bold">
+                  {historyCount}
+                </span>
+              )}
+            </button>
           )}
         </div>
 

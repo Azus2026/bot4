@@ -109,6 +109,10 @@ export interface SearchCacheEntry {
   query: string;
   region: string;
   country: string;
+  countryName?: string;
+  zone?: string;
+  niche?: string;
+  filterSpanish?: boolean;
   results: BusinessLead[];
   nextPageToken?: string;
   timestamp: number;
