@@ -13,6 +13,8 @@ import { LeadDetailModal } from "@/components/lead/LeadDetailModal";
 import { NicheRadarView } from "@/components/radar/NicheRadarView";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { SettingsView } from "@/components/settings/SettingsView";
+import { ProposalsView } from "@/components/proposals/ProposalsView";
+import { checkStatusTransition } from "@/lib/proposal/workflow";
 import {
   Loader2,
   AlertCircle,
@@ -577,6 +579,12 @@ export default function Home() {
           <KanbanBoard
             leads={savedLeads}
             onUpdateLeadStatus={async (id, status) => {
+              const current = savedLeads.find((l) => l.id === id);
+              const blocked = current ? checkStatusTransition(current, status) : null;
+              if (blocked) {
+                alert(blocked);
+                return;
+              }
               await DataRepository.updateLeadStatus(id, status);
               const updated = await DataRepository.getAllLeads();
               setSavedLeads(updated);
@@ -587,6 +595,22 @@ export default function Home() {
               const updated = await DataRepository.getAllLeads();
               setSavedLeads(updated);
             }}
+          />
+        )}
+
+        {/* PANTALLA: PROPUESTAS (Top-N por ciudad + generador, con aprobación manual) */}
+        {currentTab === "proposals" && (
+          <ProposalsView
+            leads={savedLeads}
+            settings={settings}
+            onSaveLead={async (lead) => {
+              await DataRepository.saveLead(lead);
+              setSavedLeads(await DataRepository.getAllLeads());
+            }}
+            onSaveSettings={async (partial) => {
+              setSettings(await DataRepository.updateSettings(partial));
+            }}
+            onOpenLead={handleOpenLead}
           />
         )}
 

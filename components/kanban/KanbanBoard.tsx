@@ -29,6 +29,7 @@ interface KanbanBoardProps {
 const KANBAN_COLUMNS: Array<{ status: LeadStatus; label: string; color: string }> = [
   { status: "NUEVO", label: "Nuevo", color: "border-slate-500 text-slate-300" },
   { status: "ANALIZADO", label: "Analizado", color: "border-radar-blue text-radar-blue" },
+  { status: "PROPUESTA_LISTA", label: "Propuesta lista", color: "border-cyan-400 text-cyan-300" },
   { status: "CONTACTADO", label: "Contactado", color: "border-amber-400 text-amber-300" },
   { status: "RESPONDIO", label: "Respondió", color: "border-emerald-400 text-emerald-300" },
   { status: "REUNION", label: "Reunión", color: "border-purple-400 text-purple-300" },

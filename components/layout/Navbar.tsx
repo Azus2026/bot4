@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { Radar, Compass, Users, Settings, Database, Activity, ShieldCheck } from "lucide-react";
+import { Radar, Compass, Users, Settings, FileText, Database, Activity, ShieldCheck } from "lucide-react";
 
-export type NavTab = "search" | "niche" | "leads" | "settings";
+export type NavTab = "search" | "niche" | "leads" | "proposals" | "settings";
 
 interface NavbarProps {
   currentTab: NavTab;
@@ -141,6 +141,18 @@ export function Navbar({
                 {savedLeadsCount}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => onTabChange("proposals")}
+            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${
+              currentTab === "proposals"
+                ? "bg-radar-panel border border-radar-accent text-radar-accent shadow-md shadow-radar-accent/10"
+                : "text-radar-textMuted hover:text-radar-textLight hover:bg-radar-panel/50"
+            }`}
+          >
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">Propuestas</span>
           </button>
 
           <button

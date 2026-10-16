@@ -3,6 +3,7 @@ export type WebsiteType = 'NONE' | 'SOCIAL_MEDIA' | 'CUSTOM_WEBSITE';
 export type LeadStatus =
   | 'NUEVO'
   | 'ANALIZADO'
+  | 'PROPUESTA_LISTA'
   | 'CONTACTADO'
   | 'RESPONDIO'
   | 'REUNION'
@@ -47,7 +48,7 @@ export interface WebAuditData {
     extractedEmails: string[];
     extractedSocials: string[];
     painPoints: PainPoint[];
-    suggestedService: 'WEB_DEVELOPMENT' | 'WHATSAPP_AGENT' | 'BOOKING_SYSTEM' | 'TRADING_BOT';
+    suggestedService: 'WEB_DEVELOPMENT' | 'WHATSAPP_AGENT' | 'BOOKING_SYSTEM' | 'TRADING_BOT' | 'SUMAC_PMS';
     serviceJustification: string;
   };
   outreachDrafts: {
@@ -94,6 +95,11 @@ export interface BusinessLead {
   status: LeadStatus;
   notes: string;
   nextFollowUpDate?: string;
+  /** No contactar: excluido de Top-N, propuestas y outreach (Ley 29733 / pedido del negocio). */
+  doNotContact?: boolean;
+  doNotContactReason?: string;
+  /** Propuesta comercial generada (borrador; requiere aprobación manual). */
+  proposal?: ProposalData;
   savedAt?: string;
   updatedAt?: string;
 }
@@ -130,6 +136,9 @@ export interface AppSettings {
   placesApiCallCountThisMonth: number;
   lastQuotaResetDate: string;
   sellerProfile: SellerProfile;
+  proposalPricing?: ProposalPricing;
+  proposalCaseStudy?: string;
+  proposalBrand?: import("@/lib/proposal/brand").ProposalBrand;
 }
 
 export interface NicheOpportunityStat {
@@ -157,4 +166,50 @@ export interface NicheRadarResult {
   }[];
   geminiExecutiveSummary?: string;
   analyzedAt: string;
+}
+
+// ===== Generador de propuestas =====
+export interface ProposalPlan {
+  name: string;
+  monthlyPrice: number; // S/ por mes
+  features: string[];
+}
+
+export interface ProposalPricing {
+  currency: string; // "S/"
+  setupMin: number;
+  setupMax: number;
+  plans: ProposalPlan[];
+}
+
+export interface CitySnapshot {
+  city: string;
+  totalBusinesses: number;
+  hotelCount: number;
+  averageRating: number;
+  averageReviews: number;
+  withoutWebsitePercent: number;
+  socialOnlyPercent: number;
+  withPhonePercent: number;
+  topCompetitors: { name: string; rating: number; reviews: number; hasWebsite: boolean }[];
+  generatedAt: string;
+}
+
+export interface ProposalData {
+  title: string;
+  executiveSummary: string;
+  diagnosis: string[];
+  marketContext: string[];
+  solution: string[];
+  recommendedPlan: string;
+  pricing: ProposalPricing;
+  roiEstimate: string;
+  nextSteps: string[];
+  whatsappDraft: string;
+  generatedBy: 'gemini' | 'template';
+  generatedAt: string;
+  /** Aprobación humana obligatoria antes de contactar. */
+  approvedAt?: string;
+  approvedBy?: string;
+  isExample?: boolean;
 }

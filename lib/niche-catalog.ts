@@ -2,7 +2,7 @@ export interface NicheItem {
   id: string;
   name: string;
   icon?: string;
-  recommendedService: 'WEB_DEVELOPMENT' | 'WHATSAPP_AGENT' | 'BOOKING_SYSTEM' | 'REFORMA_3D';
+  recommendedService: 'WEB_DEVELOPMENT' | 'WHATSAPP_AGENT' | 'BOOKING_SYSTEM' | 'REFORMA_3D' | 'SUMAC_PMS';
   ticketLevel: 'ALTO' | 'MEDIO' | 'VOLUMEN';
   description: string;
 }
@@ -23,6 +23,18 @@ export interface NichePresetPack {
 }
 
 export const NICHE_CATALOG: NicheCategoryGroup[] = [
+  {
+    id: "hospedaje-peru",
+    name: "Hospedaje & Turismo Perú (Sistema Sumac)",
+    icon: "🏨",
+    niches: [
+      { id: "hoteles", name: "hotel", recommendedService: "SUMAC_PMS", ticketLevel: "ALTO", description: "Hoteles independientes: gestión de habitaciones, reservas y caja con Sumac." },
+      { id: "hostales", name: "hostal", recommendedService: "SUMAC_PMS", ticketLevel: "ALTO", description: "Hostales familiares que aún usan cuaderno o Excel." },
+      { id: "hospedajes", name: "hospedaje", recommendedService: "SUMAC_PMS", ticketLevel: "MEDIO", description: "Hospedajes y casas de huéspedes en ciudades intermedias." },
+      { id: "lodges", name: "lodge", recommendedService: "SUMAC_PMS", ticketLevel: "ALTO", description: "Lodges y alojamientos turísticos (Cusco, Valle Sagrado, selva)." },
+      { id: "tour-operadores", name: "agencia de turismo", recommendedService: "SUMAC_PMS", ticketLevel: "MEDIO", description: "Tour operadores: cupos, pasajeros y pagos (adaptación de Sumac)." },
+    ],
+  },
   {
     id: "reformas-hogar",
     name: "Hogar, Reformas & Construcción (Alto Ticket / Bono 3D)",

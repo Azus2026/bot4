@@ -652,6 +652,7 @@ export function LeadDetailModal({
                 >
                   <option value="NUEVO">Nuevo</option>
                   <option value="ANALIZADO">Analizado</option>
+                  <option value="PROPUESTA_LISTA">Propuesta lista</option>
                   <option value="CONTACTADO">Contactado</option>
                   <option value="RESPONDIO">Respondió</option>
                   <option value="REUNION">Reunión Agendada</option>
