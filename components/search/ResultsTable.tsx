@@ -13,6 +13,7 @@ import {
   Check,
   Globe2,
   Share2,
+  Mail,
 } from "lucide-react";
 
 interface ResultsTableProps {
@@ -200,6 +201,17 @@ export function ResultsTable({
                         </a>
                       ) : (
                         <span className="font-mono text-slate-500 text-[11px]">Sin teléfono</span>
+                      )}
+
+                      {(lead.email || lead.webAudit?.analysis?.extractedEmails?.[0]) && (
+                        <a
+                          href={`mailto:${lead.email || lead.webAudit?.analysis?.extractedEmails?.[0]}`}
+                          className="flex items-center gap-1.5 font-mono text-emerald-400 hover:underline text-[11px] truncate"
+                          title={lead.email || lead.webAudit?.analysis?.extractedEmails?.[0]}
+                        >
+                          <Mail className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{lead.email || lead.webAudit?.analysis?.extractedEmails?.[0]}</span>
+                        </a>
                       )}
 
                       <div className="flex items-start gap-1 text-[11px] text-slate-400 truncate" title={lead.formattedAddress}>

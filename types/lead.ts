@@ -73,6 +73,7 @@ export interface BusinessLead {
   };
   phone?: string;
   internationalPhone?: string;
+  email?: string;
   websiteUri?: string;
   websiteType: WebsiteType;
   socialNetworkDetected?: string; // 'Facebook' | 'Instagram' | 'TikTok' | 'Linktree' | etc.

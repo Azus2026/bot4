@@ -144,6 +144,7 @@ export function LeadDetailModal({
 
       const updatedLead: BusinessLead = {
         ...lead,
+        email: lead.email || auditResult.extractedEmails?.[0] || undefined,
         definitiveScore: defScore,
         scoreBreakdown: defBreakdown,
         webAudit: webAuditPayload,
@@ -231,8 +232,8 @@ export function LeadDetailModal({
 
         {/* Scrollable Content */}
         <div className="overflow-y-auto p-6 space-y-6 flex-1 text-sm">
-          {/* Fila de Contacto Rápido */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {/* Fila de Contacto Rápido (4 columnas) */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {/* Teléfono */}
             <div className="rounded-xl border border-radar-border bg-radar-bg/60 p-3 flex items-center justify-between">
               <div>
@@ -249,6 +250,38 @@ export function LeadDetailModal({
                 >
                   <Phone className="h-4 w-4" />
                 </a>
+              )}
+            </div>
+
+            {/* Correo Electrónico */}
+            <div className="rounded-xl border border-radar-border bg-radar-bg/60 p-3 flex items-center justify-between">
+              <div className="truncate pr-2">
+                <span className="text-[10px] font-mono uppercase text-slate-500 block">Correo Electrónico</span>
+                {lead.email || lead.webAudit?.analysis?.extractedEmails?.[0] ? (
+                  <span
+                    className="font-mono font-bold text-emerald-400 text-xs truncate block"
+                    title={lead.email || lead.webAudit?.analysis?.extractedEmails?.[0]}
+                  >
+                    {lead.email || lead.webAudit?.analysis?.extractedEmails?.[0]}
+                  </span>
+                ) : (
+                  <span className="font-mono text-xs text-slate-500 block">
+                    {lead.webAudit ? "No detectado en web" : "Audita web para extraer"}
+                  </span>
+                )}
+              </div>
+              {(lead.email || lead.webAudit?.analysis?.extractedEmails?.[0]) ? (
+                <a
+                  href={`mailto:${lead.email || lead.webAudit?.analysis?.extractedEmails?.[0]}`}
+                  className="rounded-lg bg-emerald-500/20 p-2 text-emerald-400 hover:bg-emerald-500/30 transition-colors shrink-0"
+                  title="Enviar correo"
+                >
+                  <Mail className="h-4 w-4" />
+                </a>
+              ) : (
+                <div className="rounded-lg bg-slate-800/60 p-2 text-slate-600">
+                  <Mail className="h-4 w-4" />
+                </div>
               )}
             </div>
 
@@ -502,6 +535,68 @@ export function LeadDetailModal({
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* Correos y Redes Sociales Detectadas en la Web */}
+                <div className="rounded-xl border border-radar-border bg-radar-panel p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-bold text-radar-textLight flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-emerald-400" />
+                      <span>Correos Electrónicos Extraídos ({audit.analysis.extractedEmails?.length || 0})</span>
+                    </span>
+                    {audit.analysis.extractedEmails && audit.analysis.extractedEmails.length > 0 && (
+                      <span className="rounded bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-mono text-emerald-400">
+                        Disponibles para Contacto
+                      </span>
+                    )}
+                  </div>
+
+                  {audit.analysis.extractedEmails && audit.analysis.extractedEmails.length > 0 ? (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {audit.analysis.extractedEmails.map((email, eIdx) => (
+                        <div
+                          key={eIdx}
+                          className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-mono text-emerald-300 shadow-sm"
+                        >
+                          <span className="font-bold">{email}</span>
+                          <a
+                            href={`mailto:${email}`}
+                            className="rounded p-1 text-emerald-400 hover:bg-emerald-500/20 hover:text-white transition-colors"
+                            title="Enviar correo directo"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-400">
+                      No se detectaron correos públicos visibles en el código ni páginas de contacto del sitio web.
+                    </p>
+                  )}
+
+                  {/* Redes sociales encontradas en la web */}
+                  {audit.analysis.extractedSocials && audit.analysis.extractedSocials.length > 0 && (
+                    <div className="border-t border-radar-border/60 pt-2.5 mt-2 space-y-1.5">
+                      <span className="text-[11px] font-mono uppercase text-slate-400 block">
+                        Redes Sociales Enlazadas:
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {audit.analysis.extractedSocials.map((soc, sIdx) => (
+                          <a
+                            key={sIdx}
+                            href={soc}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-md border border-radar-borderLight bg-radar-bg px-2 py-1 text-[11px] text-slate-300 hover:text-radar-blue hover:border-radar-blue transition-colors flex items-center gap-1"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            <span className="truncate max-w-[200px]">{soc.replace(/^https?:\/\/(www\.)?/i, "")}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
