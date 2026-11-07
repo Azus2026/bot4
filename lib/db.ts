@@ -168,15 +168,15 @@ export class DataRepository {
     await db.delete("leads", id);
   }
 
-  // === SEARCH CACHE (7 DÍAS TTL) ===
+  // === SEARCH CACHE (90 DÍAS TTL) ===
   static async getCachedSearch(cacheKey: string): Promise<SearchCacheEntry | null> {
     try {
       const db = await getDb();
       const entry = await db.get("searchCache", cacheKey);
       if (!entry) return null;
 
-      const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-      if (Date.now() - entry.timestamp > SEVEN_DAYS_MS) {
+      const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+      if (Date.now() - entry.timestamp > NINETY_DAYS_MS) {
         await db.delete("searchCache", cacheKey);
         return null;
       }
@@ -200,9 +200,9 @@ export class DataRepository {
     try {
       const db = await getDb();
       const entries = await db.getAll("searchCache");
-      const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+      const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
       const now = Date.now();
-      const valid = entries.filter((e) => now - e.timestamp <= SEVEN_DAYS_MS);
+      const valid = entries.filter((e) => now - e.timestamp <= NINETY_DAYS_MS);
       return valid.sort((a, b) => b.timestamp - a.timestamp);
     } catch {
       return [];

@@ -108,7 +108,7 @@ export function SearchHistoryModal({
         <div className="flex items-center justify-between text-xs font-mono text-radar-textMuted px-1">
           <span>
             {history.length} búsqueda{history.length !== 1 ? "s" : ""} disponible
-            {history.length !== 1 ? "s" : ""} en memoria (TTL: 7 días)
+            {history.length !== 1 ? "s" : ""} en memoria (TTL: 90 días)
           </span>
 
           {history.length > 0 && (
@@ -231,7 +231,7 @@ export function SearchHistoryModal({
 
         {/* Footer */}
         <div className="border-t border-radar-border/60 pt-3 flex items-center justify-between text-xs text-slate-500 font-mono">
-          <span>💡 Las búsquedas se renuevan automáticamente a los 7 días.</span>
+          <span>💡 Las búsquedas se conservan durante 90 días en la memoria de este navegador.</span>
           <button
             onClick={onClose}
             className="rounded-lg border border-radar-borderLight bg-radar-bg px-4 py-1.5 text-slate-300 hover:text-white transition-colors"
